@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETF Screening Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #ffffff;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .screener-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #252525;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .screener-table th {
+            background-color: #2d2d2d;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 13px;
+            color: #b0b0b0;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            border-bottom: 1px solid #3d3d3d;
+        }
+        
+        .screener-table th:hover {
+            background-color: #353535;
+        }
+        
+        .screener-table th.sortable::after {
+            content: '⇅';
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+        }
+        
+        .screener-table th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        
+        .screener-table th.perf-header::after {
+            content: '⇅';
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+        }
+        
+        .screener-table th.perf-header.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        
+        .screener-table th.perf-header.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+        
+        .screener-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #2d2d2d;
+            font-size: 14px;
+        }
+        
+        .screener-table tr:hover {
+            background-color: #2a2a2a;
+        }
+        
+        .ticker-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ticker-symbol {
+            font-weight: 600;
+            color: #4a9eff;
+        }
+        
+        .positive {
+            color: #26a69a;
+        }
+        
+        .negative {
+            color: #ef5350;
+        }
+        
+        .neutral {
+            color: #d4d4d4;
+        }
+        
+        .trinko-choice {
+            font-size: 20px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        
+        .error {
+            color: #ef5350;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
+        .aum-value {
+            color: #888;
+        }
+
+        .perf-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            font-size: 12px;
+        }
+
+        .perf-item {
+            text-align: right;
+        }
+
+        .perf-label {
+            color: #666;
+            margin-right: 4px;
+        }
+
+        .perf-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 8px;
+            z-index: 1000;
+            display: none;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .perf-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-section {
+            margin-bottom: 12px;
+        }
+
+        .dropdown-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timeframe-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .timeframe-btn {
+            padding: 4px 8px;
+            background-color: #353535;
+            border: 1px solid #454545;
+            border-radius: 3px;
+            color: #d4d4d4;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .timeframe-btn:hover {
+            background-color: #404040;
+            border-color: #4a9eff;
+        }
+
+        .timeframe-btn.active {
+            background-color: #4a9eff;
+            border-color: #4a9eff;
+            color: white;
+        }
+
+        .sort-direction-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        .direction-btn {
+            flex: 1;
+            padding: 6px 12px;
+            background-color: #353535;
+            border: 1px solid #454545;
+            border-radius: 3px;
+            color: #d4d4d4;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .direction-btn:hover {
+            background-color: #404040;
+            border-color: #4a9eff;
+        }
+
+        .direction-btn.active {
+            background-color: #4a9eff;
+            border-color: #4a9eff;
+            color: white;
+        }
+
+        .zscore-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .zscore-item {
+            text-align: right;
+        }
+
+        .zscore-label {
+            color: #666;
+            margin-right: 4px;
+        }
+
+        .zscore-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-radius: 4px;
+            padding: 8px;
+            z-index: 1000;
+            display: none;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .zscore-dropdown.show {
+            display: block;
+        }
+
+        th.zscore-header {
+            position: relative;
+        }
+
+        .screener-table th.zscore-header::after {
+            content: '⇅';
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+        }
+        
+        .screener-table th.zscore-header.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        
+        .screener-table th.zscore-header.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        .help-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-left: 6px;
+            background-color: #454545;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 11px;
+            color: #999;
+            cursor: help;
+            transition: all 0.2s;
+        }
+
+        .help-icon:hover {
+            background-color: #4a9eff;
+            color: white;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-radius: 6px;
+            padding: 12px 16px;
+            max-width: 300px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #d4d4d4;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            display: none;
+        }
+
+        .tooltip.show {
+            display: block;
+        }
+
+        .tooltip h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #4a9eff;
+        }
+
+        .tooltip p {
+            margin: 0 0 6px 0;
+        }
+
+        .tooltip p:last-child {
+            margin-bottom: 0;
+        }
+
+        .footer-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #3d3d3d;
+        }
+
+        .footer-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #999;
+        }
+
+        .footer-content h3 {
+            font-size: 15px;
+            color: #d4d4d4;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .footer-content p,
+        .footer-content li {
+            margin-bottom: 8px;
+        }
+
+        .footer-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .footer-content li::before {
+            content: "• ";
+            color: #4a9eff;
+            margin-right: 6px;
+        }
+
+        .footer-content a {
+            color: #4a9eff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-content a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            background-color: #2d2d2d;
+            border: 1px solid #3d3d3d;
+            border-radius: 8px;
+            color: #d4d4d4;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+        }
+
+        .search-box::placeholder {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ETF Screening Tool</h1>
+        
+        <div class="search-container">
+            <input type="text" class="search-box" id="searchBox" placeholder="Search ETF by ticker, name, or theme (e.g., 'technology', 'SOXX', 'semiconductor')">
+        </div>
+        
+        <div id="tableContainer">
+            <div class="loading">Loading ETF data...</div>
+        </div>
+        
+        <div class="footer-section">
+            <div class="footer-content">
+                <div class="footer-grid">
+                    <div>
+                        <h3>How to Use This Tool</h3>
+                        <p>Looking for investment ideas? Here's our suggested workflow:</p>
+                        <ul>
+                            <li>Go to our <a href="#">Undervalued Asset Finder</a> to identify undervalued assets and themes</li>
+                            <li>Screen those names here using this ETF Screener</li>
+                            <li>Use our <a href="#">Research Snapshot</a> to instantly generate investment reports</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>About This ETF Universe</h3>
+                        <p>All ETFs in this list are pre-screened using these criteria:</p>
+                        <ul>
+                            <li>Asset class: Equities, Fixed Income, or Commodities only</li>
+                            <li>Holdings region: North America</li>
+                            <li>AUM: Over $1 billion</li>
+                            <li>Management style: Passive only</li>
+                            <li>Leverage: Non-leveraged</li>
+                            <li>Expense ratio: Under 0.5%</li>
+                        </ul>
+                        <p>This creates a list of ETFs that are i) liquid with low management fees and tracking error, and ii) pure-play and passively managed funds whose underperformance, if any, is likely due to market cycles rather than poor fund management.</p>
+                        <p><strong>Note:</strong> For leveraged ETFs, search their unleveraged version (e.g., QQQ instead of TQQQ).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // First 5 tickers from the list
+        const tickers = ['XOP', 'ITB', 'ZROZ', 'SOXX', 'XHB'];
+        
+        // Mock data for demonstration (in production, this would come from a financial API)
+        const mockData = {
+            'XOP': {
+                name: 'SPDR S&P Oil & Gas Exploration & Production ETF',
+                price: 142.35,
+                change1D: 2.15,
+                high52W: 156.78,
+                aum: 5.2,
+                focus: 'Energy',
+                index: 'S&P Oil & Gas Exploration & Production Select Industry',
+                perf: { '1W': -1.2, '1M': 3.5, '3M': 8.2, '6M': 12.4, 'YTD': 15.3, '1Y': 18.6, '5Y': 45.2, '10Y': 22.1 },
+                zscore: { '20D': -0.8, '100D': -1.2, '365D': -0.5 }
+            },
+            'ITB': {
+                name: 'iShares U.S. Home Construction ETF',
+                price: 98.42,
+                change1D: -0.75,
+                high52W: 112.30,
+                aum: 3.1,
+                focus: 'Real Estate',
+                index: 'Dow Jones U.S. Select Home Construction',
+                perf: { '1W': -2.1, '1M': -1.8, '3M': 5.6, '6M': 8.9, 'YTD': 12.1, '1Y': 24.3, '5Y': 89.5, '10Y': 156.2 },
+                zscore: { '20D': -1.2, '100D': -2.3, '365D': -1.8 }
+            },
+            'ZROZ': {
+                name: 'PIMCO 25+ Year Zero Coupon U.S. Treasury ETF',
+                price: 78.23,
+                change1D: -1.42,
+                high52W: 95.67,
+                aum: 1.8,
+                focus: 'Long-Term Bonds',
+                index: 'ICE BofA Long US Treasury Principal STRIPS',
+                perf: { '1W': -3.2, '1M': -5.1, '3M': -8.3, '6M': -12.1, 'YTD': -15.2, '1Y': -18.9, '5Y': -35.6, '10Y': 12.3 },
+                zscore: { '20D': -2.8, '100D': -2.5, '365D': -2.1 }
+            },
+            'SOXX': {
+                name: 'iShares Semiconductor ETF',
+                price: 245.67,
+                change1D: 3.28,
+                high52W: 268.90,
+                aum: 12.4,
+                focus: 'Technology',
+                index: 'ICE Semiconductor Index',
+                perf: { '1W': 2.3, '1M': 5.8, '3M': 12.4, '6M': 18.9, 'YTD': 28.5, '1Y': 45.2, '5Y': 285.6, '10Y': 589.2 },
+                zscore: { '20D': 1.8, '100D': 1.5, '365D': 0.8 }
+            },
+            'XHB': {
+                name: 'SPDR S&P Homebuilders ETF',
+                price: 105.89,
+                change1D: -0.23,
+                high52W: 118.45,
+                aum: 2.5,
+                focus: 'Consumer Cyclical',
+                index: 'S&P Homebuilders Select Industry',
+                perf: { '1W': -1.5, '1M': -0.8, '3M': 6.2, '6M': 10.5, 'YTD': 14.8, '1Y': 28.9, '5Y': 95.2, '10Y': 178.3 },
+                zscore: { '20D': -2.1, '100D': -1.3, '365D': -0.9 }
+            }
+        };
+
+        function calculateRecoveryUpside(price, high52W) {
+            if (price < high52W) {
+                return ((high52W / price - 1) * 100).toFixed(2);
+            }
+            return null;
+        }
+
+        function checkTrinkoChoice(recoveryUpside, zscores) {
+            const countBelowMinus2 = Object.values(zscores).filter(z => z < -2).length;
+            
+            if (recoveryUpside > 10 && countBelowMinus2 >= 3) {
+                return '🚀🚀🚀';
+            } else if (recoveryUpside > 5 && countBelowMinus2 >= 2) {
+                return '🚀🚀';
+            } else if (recoveryUpside > 0 && countBelowMinus2 >= 1) {
+                return '🚀';
+            }
+            return '';
+        }
+
+        function formatChange(value) {
+            const sign = value >= 0 ? '+' : '';
+            return `${sign}${value.toFixed(2)}%`;
+        }
+
+        function formatPrice(value) {
+            return `${value.toFixed(2)} USD`;
+        }
+
+        function formatAUM(value) {
+            return `${value.toFixed(2)}B USD`;
+        }
+
+        function createTable(data) {
+            const tableHTML = `
+                <table class="screener-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="ticker">Ticker</th>
+                            <th class="sortable" data-sort="name">Name</th>
+                            <th class="sortable" data-sort="price">Price</th>
+                            <th class="sortable" data-sort="change">Change % (1D)</th>
+                            <th class="sortable" data-sort="high52w">High (52W)</th>
+                            <th class="sortable" data-sort="aum">AUM</th>
+                            <th class="sortable" data-sort="focus">Focus</th>
+                            <th class="sortable" data-sort="index">Index</th>
+                            <th class="perf-header">
+                                Perf (%)
+                                <div class="perf-dropdown" id="perfDropdown">
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Timeframe</div>
+                                        <div class="timeframe-buttons">
+                                            <button class="timeframe-btn" data-timeframe="1W">1W</button>
+                                            <button class="timeframe-btn" data-timeframe="1M">1M</button>
+                                            <button class="timeframe-btn" data-timeframe="3M">3M</button>
+                                            <button class="timeframe-btn" data-timeframe="6M">6M</button>
+                                            <button class="timeframe-btn" data-timeframe="YTD">YTD</button>
+                                            <button class="timeframe-btn" data-timeframe="1Y">1Y</button>
+                                            <button class="timeframe-btn" data-timeframe="5Y">5Y</button>
+                                            <button class="timeframe-btn" data-timeframe="10Y">10Y</button>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Sort Direction</div>
+                                        <div class="sort-direction-buttons">
+                                            <button class="direction-btn" data-direction="asc">↑ Ascending</button>
+                                            <button class="direction-btn" data-direction="desc">↓ Descending</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="sortable" data-sort="recovery">
+                                Recovery Upside (%)
+                                <span class="help-icon" data-tooltip="recovery">?</span>
+                            </th>
+                            <th class="zscore-header">
+                                Z-score
+                                <span class="help-icon" data-tooltip="zscore">?</span>
+                                <div class="zscore-dropdown" id="zscoreDropdown">
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Timeframe</div>
+                                        <div class="timeframe-buttons">
+                                            <button class="timeframe-btn" data-timeframe="20D">20D</button>
+                                            <button class="timeframe-btn" data-timeframe="100D">100D</button>
+                                            <button class="timeframe-btn" data-timeframe="365D">365D</button>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Sort Direction</div>
+                                        <div class="sort-direction-buttons">
+                                            <button class="direction-btn" data-direction="asc">↑ Ascending</button>
+                                            <button class="direction-btn" data-direction="desc">↓ Descending</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Trinko Choice
+                                <span class="help-icon" data-tooltip="trinko">?</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        ${data.map(row => `
+                            <tr>
+                                <td><span class="ticker-symbol">${row.ticker}</span></td>
+                                <td>${row.name}</td>
+                                <td class="price-value">${formatPrice(row.price)}</td>
+                                <td class="${row.change1D >= 0 ? 'positive' : 'negative'}">${formatChange(row.change1D)}</td>
+                                <td>${formatPrice(row.high52W)}</td>
+                                <td class="aum-value">${formatAUM(row.aum)}</td>
+                                <td>${row.focus}</td>
+                                <td>${row.index}</td>
+                                <td>
+                                    <div class="perf-grid">
+                                        <div class="perf-item"><span class="perf-label">1W:</span><span class="${row.perf['1W'] >= 0 ? 'positive' : 'negative'}">${row.perf['1W'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">1M:</span><span class="${row.perf['1M'] >= 0 ? 'positive' : 'negative'}">${row.perf['1M'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">3M:</span><span class="${row.perf['3M'] >= 0 ? 'positive' : 'negative'}">${row.perf['3M'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">6M:</span><span class="${row.perf['6M'] >= 0 ? 'positive' : 'negative'}">${row.perf['6M'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">YTD:</span><span class="${row.perf['YTD'] >= 0 ? 'positive' : 'negative'}">${row.perf['YTD'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">1Y:</span><span class="${row.perf['1Y'] >= 0 ? 'positive' : 'negative'}">${row.perf['1Y'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">5Y:</span><span class="${row.perf['5Y'] >= 0 ? 'positive' : 'negative'}">${row.perf['5Y'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">10Y:</span><span class="${row.perf['10Y'] >= 0 ? 'positive' : 'negative'}">${row.perf['10Y'].toFixed(2)}%</span></div>
+                                    </div>
+                                </td>
+                                <td class="${row.recoveryUpside ? 'positive' : 'neutral'}">${row.recoveryUpside ? '+' + row.recoveryUpside + '%' : ''}</td>
+                                <td>
+                                    <div class="zscore-grid">
+                                        <div class="zscore-item"><span class="zscore-label">20D:</span><span class="${row.zscore['20D'] < -2 ? 'positive' : row.zscore['20D'] > 2 ? 'negative' : 'neutral'}">${row.zscore['20D'].toFixed(2)}</span></div>
+                                        <div class="zscore-item"><span class="zscore-label">100D:</span><span class="${row.zscore['100D'] < -2 ? 'positive' : row.zscore['100D'] > 2 ? 'negative' : 'neutral'}">${row.zscore['100D'].toFixed(2)}</span></div>
+                                        <div class="zscore-item"><span class="zscore-label">365D:</span><span class="${row.zscore['365D'] < -2 ? 'positive' : row.zscore['365D'] > 2 ? 'negative' : 'neutral'}">${row.zscore['365D'].toFixed(2)}</span></div>
+                                    </div>
+                                </td>
+                                <td class="trinko-choice">${row.trinkoChoice}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('tableContainer').innerHTML = tableHTML;
+            setupSorting();
+        }
+
+        function setupSorting() {
+            const headers = document.querySelectorAll('.sortable');
+            const perfHeader = document.querySelector('.perf-header');
+            const perfDropdown = document.getElementById('perfDropdown');
+            const zscoreHeader = document.querySelector('.zscore-header');
+            const zscoreDropdown = document.getElementById('zscoreDropdown');
+            let currentSort = { column: null, direction: 'asc' };
+            let selectedPerfTimeframe = null;
+            let selectedZscoreTimeframe = null;
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.dataset.sort;
+                    
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+
+                    // Update header classes
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    header.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                    // Sort and re-render
+                    sortTable(currentSort.column, currentSort.direction);
+                });
+            });
+
+            // Performance column special handling
+            perfHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                perfDropdown.classList.toggle('show');
+                zscoreDropdown.classList.remove('show');
+            });
+
+            // Z-score column special handling
+            zscoreHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                zscoreDropdown.classList.toggle('show');
+                perfDropdown.classList.remove('show');
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!perfHeader.contains(e.target)) {
+                    perfDropdown.classList.remove('show');
+                }
+                if (!zscoreHeader.contains(e.target)) {
+                    zscoreDropdown.classList.remove('show');
+                }
+            });
+
+            // Performance timeframe buttons
+            const perfTimeframeButtons = perfDropdown.querySelectorAll('.timeframe-btn');
+            perfTimeframeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    perfTimeframeButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedPerfTimeframe = btn.dataset.timeframe;
+                });
+            });
+
+            // Performance direction buttons
+            const perfDirectionButtons = perfDropdown.querySelectorAll('.direction-btn');
+            perfDirectionButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!selectedPerfTimeframe) {
+                        alert('Please select a timeframe first');
+                        return;
+                    }
+                    
+                    perfDirectionButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const direction = btn.dataset.direction;
+                    sortByPerformance(selectedPerfTimeframe, direction);
+                    perfDropdown.classList.remove('show');
+                    
+                    // Update header visual
+                    headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                    perfHeader.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                });
+            });
+
+            // Z-score timeframe buttons
+            const zscoreTimeframeButtons = zscoreDropdown.querySelectorAll('.timeframe-btn');
+            zscoreTimeframeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    zscoreTimeframeButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedZscoreTimeframe = btn.dataset.timeframe;
+                });
+            });
+
+            // Z-score direction buttons
+            const zscoreDirectionButtons = zscoreDropdown.querySelectorAll('.direction-btn');
+            zscoreDirectionButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!selectedZscoreTimeframe) {
+                        alert('Please select a timeframe first');
+                        return;
+                    }
+                    
+                    zscoreDirectionButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const direction = btn.dataset.direction;
+                    sortByZscore(selectedZscoreTimeframe, direction);
+                    zscoreDropdown.classList.remove('show');
+                    
+                    // Update header visual
+                    headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                    zscoreHeader.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                });
+            });
+        }
+
+        function sortByPerformance(timeframe, direction) {
+            processedData.sort((a, b) => {
+                const aVal = a.perf[timeframe];
+                const bVal = b.perf[timeframe];
+                
+                if (direction === 'asc') {
+                    return aVal - bVal;
+                } else {
+                    return bVal - aVal;
+                }
+            });
+
+            createTable(processedData);
+        }
+
+        function sortByZscore(timeframe, direction) {
+            processedData.sort((a, b) => {
+                const aVal = a.zscore[timeframe];
+                const bVal = b.zscore[timeframe];
+                
+                if (direction === 'asc') {
+                    return aVal - bVal;
+                } else {
+                    return bVal - aVal;
+                }
+            });
+
+            createTable(processedData);
+        }
+
+        function sortTable(column, direction) {
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            const sortedData = processedData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                // Handle different data types
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (direction === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
+
+            // Re-render sorted data
+            createTable(sortedData);
+        }
+
+        // Process data
+        let processedData = [];
+        
+        function loadData() {
+            try {
+                processedData = tickers.map(ticker => {
+                    const data = mockData[ticker];
+                    const recoveryUpside = calculateRecoveryUpside(data.price, data.high52W);
+                    const trinkoChoice = checkTrinkoChoice(parseFloat(recoveryUpside), data.zscore);
+                    
+                    return {
+                        ticker,
+                        name: data.name,
+                        price: data.price,
+                        change1D: data.change1D,
+                        high52W: data.high52W,
+                        aum: data.aum,
+                        focus: data.focus,
+                        index: data.index,
+                        perf: data.perf,
+                        recoveryUpside,
+                        recovery: parseFloat(recoveryUpside) || 0,
+                        zscore: data.zscore,
+                        trinkoChoice
+                    };
+                });
+
+                createTable(processedData);
+            } catch (error) {
+                document.getElementById('tableContainer').innerHTML = `
+                    <div class="error">Error loading data: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Initialize
+        loadData();
+
+        // Search functionality
+        function setupSearch() {
+            const searchBox = document.getElementById('searchBox');
+            
+            searchBox.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                filterTable(searchTerm);
+            });
+        }
+
+        function filterTable(searchTerm) {
+            if (!searchTerm) {
+                createTable(processedData);
+                return;
+            }
+
+            const filteredData = processedData.filter(row => {
+                return row.ticker.toLowerCase().includes(searchTerm) ||
+                       row.name.toLowerCase().includes(searchTerm) ||
+                       row.focus.toLowerCase().includes(searchTerm) ||
+                       row.index.toLowerCase().includes(searchTerm);
+            });
+
+            createTable(filteredData);
+        }
+
+        // Tooltip functionality
+        const tooltipData = {
+            recovery: {
+                title: "Recovery Upside %",
+                content: [
+                    "What it measures: The potential gain if the ETF price returns to its 1-year high.",
+                    "How to read: +20% means the ETF could gain 20% if it recovers to its 52-week high.",
+                    "How it's calculated: (52-week High ÷ Current Price - 1) × 100"
+                ]
+            },
+            zscore: {
+                title: "Z-Score",
+                content: [
+                    "What it measures: How far the current price is from its average, in standard deviations.",
+                    "How to read: -2.0 means the price is 2 standard deviations below average (oversold). +2.0 means 2 standard deviations above (overbought).",
+                    "How it's calculated: (Current Price - Moving Average) ÷ Standard Deviation"
+                ]
+            },
+            trinko: {
+                title: "Trinko Choice Rating",
+                content: [
+                    "What it measures: A rating system that identifies undervalued ETFs likely to outperform. It's calculated using recovery upside and z-score to identify assets that are likely to be undervalued.",
+                    "How to read: More rockets = stronger buy signal.",
+                    "Rating logic:<br>🚀🚀🚀 = Recovery >10% AND 3+ z-scores <-2<br>🚀🚀 = Recovery >5% AND 2+ z-scores <-2<br>🚀 = Recovery >0% AND 1+ z-score <-2",
+                    "Why it works: ETFs with high ratings are deeply undervalued. Historical data shows they outperform regular DCA investing."
+                ]
+            }
+        };
+
+        function setupTooltips() {
+            const helpIcons = document.querySelectorAll('.help-icon');
+            const tooltip = document.getElementById('tooltip');
+
+            helpIcons.forEach(icon => {
+                icon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const type = icon.dataset.tooltip;
+                    const data = tooltipData[type];
+                    
+                    if (data) {
+                        tooltip.innerHTML = `
+                            <h4>${data.title}</h4>
+                            ${data.content.map(text => `<p>${text}</p>`).join('')}
+                        `;
+                        
+                        // Position tooltip near the clicked icon
+                        const iconRect = icon.getBoundingClientRect();
+                        const tooltipWidth = 300; // max-width from CSS
+                        
+                        // Calculate position
+                        let left = iconRect.left + iconRect.width + 10;
+                        let top = iconRect.top - 10;
+                        
+                        // Adjust if tooltip would go off right edge
+                        if (left + tooltipWidth > window.innerWidth) {
+                            left = iconRect.left - tooltipWidth - 10;
+                        }
+                        
+                        // Adjust if tooltip would go off top edge
+                        if (top < 10) {
+                            top = iconRect.bottom + 10;
+                        }
+                        
+                        tooltip.style.top = `${top + window.scrollY}px`;
+                        tooltip.style.left = `${left + window.scrollX}px`;
+                        tooltip.classList.add('show');
+                    }
+                });
+            });
+
+            // Close tooltip when clicking outside
+            document.addEventListener('click', () => {
+                tooltip.classList.remove('show');
+            });
+        }
+
+        // Call setupTooltips after table is created
+        function createTable(data) {
+            const tableHTML = `
+                <table class="screener-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="ticker">Ticker</th>
+                            <th class="sortable" data-sort="name">Name</th>
+                            <th class="sortable" data-sort="price">Price</th>
+                            <th class="sortable" data-sort="change">Change % (1D)</th>
+                            <th class="sortable" data-sort="high52w">High (52W)</th>
+                            <th class="sortable" data-sort="aum">AUM</th>
+                            <th class="sortable" data-sort="focus">Focus</th>
+                            <th class="sortable" data-sort="index">Index</th>
+                            <th class="perf-header">
+                                Perf (%)
+                                <div class="perf-dropdown" id="perfDropdown">
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Timeframe</div>
+                                        <div class="timeframe-buttons">
+                                            <button class="timeframe-btn" data-timeframe="1W">1W</button>
+                                            <button class="timeframe-btn" data-timeframe="1M">1M</button>
+                                            <button class="timeframe-btn" data-timeframe="3M">3M</button>
+                                            <button class="timeframe-btn" data-timeframe="6M">6M</button>
+                                            <button class="timeframe-btn" data-timeframe="YTD">YTD</button>
+                                            <button class="timeframe-btn" data-timeframe="1Y">1Y</button>
+                                            <button class="timeframe-btn" data-timeframe="5Y">5Y</button>
+                                            <button class="timeframe-btn" data-timeframe="10Y">10Y</button>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Sort Direction</div>
+                                        <div class="sort-direction-buttons">
+                                            <button class="direction-btn" data-direction="asc">↑ Ascending</button>
+                                            <button class="direction-btn" data-direction="desc">↓ Descending</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
+                            <th class="sortable" data-sort="recovery">
+                                Recovery Upside (%)
+                                <span class="help-icon" data-tooltip="recovery">?</span>
+                            </th>
+                            <th class="zscore-header">
+                                Z-score
+                                <span class="help-icon" data-tooltip="zscore">?</span>
+                                <div class="zscore-dropdown" id="zscoreDropdown">
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Timeframe</div>
+                                        <div class="timeframe-buttons">
+                                            <button class="timeframe-btn" data-timeframe="20D">20D</button>
+                                            <button class="timeframe-btn" data-timeframe="100D">100D</button>
+                                            <button class="timeframe-btn" data-timeframe="365D">365D</button>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-section">
+                                        <div class="dropdown-label">Sort Direction</div>
+                                        <div class="sort-direction-buttons">
+                                            <button class="direction-btn" data-direction="asc">↑ Ascending</button>
+                                            <button class="direction-btn" data-direction="desc">↓ Descending</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                Trinko Choice
+                                <span class="help-icon" data-tooltip="trinko">?</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        ${data.map(row => `
+                            <tr>
+                                <td><span class="ticker-symbol">${row.ticker}</span></td>
+                                <td>${row.name}</td>
+                                <td class="price-value">${formatPrice(row.price)}</td>
+                                <td class="${row.change1D >= 0 ? 'positive' : 'negative'}">${formatChange(row.change1D)}</td>
+                                <td>${formatPrice(row.high52W)}</td>
+                                <td class="aum-value">${formatAUM(row.aum)}</td>
+                                <td>${row.focus}</td>
+                                <td>${row.index}</td>
+                                <td>
+                                    <div class="perf-grid">
+                                        <div class="perf-item"><span class="perf-label">1W:</span><span class="${row.perf['1W'] >= 0 ? 'positive' : 'negative'}">${row.perf['1W'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">1M:</span><span class="${row.perf['1M'] >= 0 ? 'positive' : 'negative'}">${row.perf['1M'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">3M:</span><span class="${row.perf['3M'] >= 0 ? 'positive' : 'negative'}">${row.perf['3M'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">6M:</span><span class="${row.perf['6M'] >= 0 ? 'positive' : 'negative'}">${row.perf['6M'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">YTD:</span><span class="${row.perf['YTD'] >= 0 ? 'positive' : 'negative'}">${row.perf['YTD'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">1Y:</span><span class="${row.perf['1Y'] >= 0 ? 'positive' : 'negative'}">${row.perf['1Y'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">5Y:</span><span class="${row.perf['5Y'] >= 0 ? 'positive' : 'negative'}">${row.perf['5Y'].toFixed(2)}%</span></div>
+                                        <div class="perf-item"><span class="perf-label">10Y:</span><span class="${row.perf['10Y'] >= 0 ? 'positive' : 'negative'}">${row.perf['10Y'].toFixed(2)}%</span></div>
+                                    </div>
+                                </td>
+                                <td class="${row.recoveryUpside ? 'positive' : 'neutral'}">${row.recoveryUpside ? '+' + row.recoveryUpside + '%' : ''}</td>
+                                <td>
+                                    <div class="zscore-grid">
+                                        <div class="zscore-item"><span class="zscore-label">20D:</span><span class="${row.zscore['20D'] < -2 ? 'positive' : row.zscore['20D'] > 2 ? 'negative' : 'neutral'}">${row.zscore['20D'].toFixed(2)}</span></div>
+                                        <div class="zscore-item"><span class="zscore-label">100D:</span><span class="${row.zscore['100D'] < -2 ? 'positive' : row.zscore['100D'] > 2 ? 'negative' : 'neutral'}">${row.zscore['100D'].toFixed(2)}</span></div>
+                                        <div class="zscore-item"><span class="zscore-label">365D:</span><span class="${row.zscore['365D'] < -2 ? 'positive' : row.zscore['365D'] > 2 ? 'negative' : 'neutral'}">${row.zscore['365D'].toFixed(2)}</span></div>
+                                    </div>
+                                </td>
+                                <td class="trinko-choice">${row.trinkoChoice}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('tableContainer').innerHTML = tableHTML;
+            setupSorting();
+            setupTooltips();
+            setupSearch();
+        }
+    </script>
+</body>
+</html>
