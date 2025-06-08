@@ -16,6 +16,7 @@ kombu==5.5.4
 numpy==2.3.0
 packaging==25.0
 pandas==2.3.0
+psycopg2-binary==2.9.9
 prompt_toolkit==3.0.51
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0

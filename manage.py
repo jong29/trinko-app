@@ -3,10 +3,18 @@
 import os
 import sys
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'trinko.settings')
+    # Force setting the DJANGO_SETTINGS_MODULE to trinko.settings
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'trinko.settings'
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  trinko-db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=trinko_db
+      - POSTGRES_USER=trinko_user
+      - POSTGRES_PASSWORD=trinko_password
+    ports:
+      - "5440:5432"
+    restart: always
+
+volumes:
+  postgres_data:
