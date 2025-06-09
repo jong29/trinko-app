@@ -75,4 +75,7 @@ class AssetZScore(models.Model):
 
     @property
     def has_trinko_choice(self):
-        pass
+        # Check if the asset meets the Trinko choice criteria
+        # Typically this would be when the z-score is below a certain threshold
+        # indicating the asset is oversold
+        return self.zscore_20d < -2.0 or self.zscore_100d < -2.0
