@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # My apps
-    'etf_scanner'
+    'etf_screener'
 ]
 
 MIDDLEWARE = [

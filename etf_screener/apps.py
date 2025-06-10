@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class EtfScannerConfig(AppConfig):
+class EtfScreenerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'etf_scanner'
+    name = 'etf_screener'

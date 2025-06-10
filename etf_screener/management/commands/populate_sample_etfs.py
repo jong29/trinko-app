@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from etf_scanner.models import Assets, AssetPriceData, AssetPerformanceData, AssetZScore
+from etf_screener.models import Assets, AssetPriceData, AssetPerformanceData, AssetZScore
 
 class Command(BaseCommand):
     help = 'Populate a small sample of ETF data from Yahoo Finance'
