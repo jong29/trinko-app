@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Screener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .header {
+            background-color: #1a1a1a;
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .screener-title {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .default-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 8px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        .toggle-btn:hover {
+            background-color: #2a2a2a;
+            color: #fff;
+        }
+
+        .filters.hidden {
+            display: none;
+        }
+
+        .filters {
+            background-color: #1a1a1a;
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background-color: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover {
+            background-color: #3a3a3a;
+        }
+
+        .filter-btn.active {
+            background-color: #FFA500;
+            border-color: #FFA500;
+        }
+
+        .flag {
+            width: 16px;
+            height: 12px;
+            border-radius: 2px;
+            background: linear-gradient(to bottom, #ff0000 33%, #ffffff 33%, #ffffff 66%, #ff0000 66%);
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: #888;
+        }
+
+        .preset-heading {
+            background-color: #1a1a1a;
+            padding: 16px;
+        }
+
+        .preset-heading h2 {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .preset-tabs-section {
+            background-color: #1a1a1a;
+            padding: 0 16px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .preset-tab {
+            padding: 12px 16px;
+            color: #888;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+
+        .preset-tab.active {
+            color: #fff;
+            border-bottom-color: #FFA500;
+        }
+
+        .preset-tab:hover {
+            color: #fff;
+        }
+
+        .tabs {
+            background-color: #1a1a1a;
+            padding: 0 16px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            color: #888;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: #fff;
+            border-bottom-color: #FFA500;
+        }
+
+        .tab:hover {
+            color: #fff;
+        }
+
+        .more-tab {
+            margin-left: auto;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background-color: #0a0a0a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #1a1a1a;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #1a1a1a;
+            color: #888;
+            font-weight: 500;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            font-size: 12px;
+        }
+
+        tr:hover {
+            background-color: #1a1a1a;
+        }
+
+        .symbol-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .company-logo {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .positive {
+            color: #00c851;
+        }
+
+        .negative {
+            color: #ff4444;
+        }
+
+        .neutral {
+            color: #888;
+        }
+
+        .sector-link {
+            color: #4a9eff;
+            text-decoration: none;
+        }
+
+        .sector-link:hover {
+            text-decoration: underline;
+        }
+
+        .rating {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .rating.buy {
+            color: #00c851;
+        }
+
+        .rating.strong-buy {
+            color: #007e33;
+        }
+
+        .rating.neutral {
+            color: #888;
+        }
+
+        .sort-icon {
+            font-size: 10px;
+            color: #888;
+            margin-left: 4px;
+        }
+
+        .company-name {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .symbol-code {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background-color: #2a2a2a;
+        }
+
+        .add-btn {
+            background: none;
+            border: 1px solid #3a3a3a;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-btn:hover {
+            background-color: #2a2a2a;
+            color: #fff;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 8px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        .refresh-btn:hover {
+            background-color: #2a2a2a;
+            color: #fff;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .grid-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+        }
+
+        .grid-btn:hover {
+            color: #fff;
+        }
+
+        .peg-filter {
+            background-color: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="screener-title">Stock Screener ▼</span>
+        <span class="default-title">ABSOLUTE DEFAULT ▼</span>
+        <button class="toggle-btn" onclick="toggleFilters()">▲</button>
+    </div>
+
+    <div class="preset-tabs-section">
+        <div class="preset-tab active">Custom</div>
+        <div class="preset-tab">Deep-Value</div>
+        <div class="preset-tab">Low-Reversal</div>
+        <div class="preset-tab">Breakout-Momentum</div>
+        <div class="preset-tab">Michael Burry</div>
+        <div class="preset-tab">Warren Buffet</div>
+    </div>
+
+    <div class="filters" id="filtersSection">
+        <div class="filter-group">
+            <button class="filter-btn">
+                Market <span class="flag"></span> US ▼
+            </button>
+            <button class="filter-btn">Watchlist ▼</button>
+            <button class="filter-btn">Index 50 ▼</button>
+            <button class="filter-btn">Price ▼</button>
+            <button class="filter-btn">Change % ▼</button>
+            <button class="filter-btn">Market cap ▼</button>
+            <button class="filter-btn">P/E ▼</button>
+            <button class="filter-btn">EPS dil growth ▼</button>
+            <button class="filter-btn">Div yield % ▼</button>
+            <button class="filter-btn">Sector ▼</button>
+            <button class="filter-btn">Analyst Rating ▼</button>
+            <button class="filter-btn">Perf % ▼</button>
+            <button class="filter-btn">Revenue growth ▼</button>
+            <button class="filter-btn peg-filter">PEG, TTM ◀ 0.5 ▼</button>
+            <button class="filter-btn">ROE ▼</button>
+            <button class="filter-btn">Beta ▼</button>
+            <button class="filter-btn">Recent earnings date ▼</button>
+            <button class="filter-btn">Upcoming earnings date ▼</button>
+            <button class="filter-btn">Volume ▼</button>
+            <button class="filter-btn">Market cap 10B to 200B USD ▼</button>
+            <button class="filter-btn">Exchange ℹ️ ▼</button>
+            <button class="add-btn">+</button>
+            <button style="background: none; border: none; color: #888; cursor: pointer;">⋯</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active">Custom</div>
+        <div class="tab">Overview</div>
+        <div class="tab">RelStr_S&P500</div>
+        <div class="tab">RelStr_Sector</div>
+        <div class="tab">Fundamentals</div>
+        <div class="tab">Momentum</div>
+        <div class="tab">Volatility</div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead id="tableHeader">
+                <tr id="customHeaders">
+                    <th>Symbol <span class="sort-icon">▼</span></th>
+                    <th>Price</th>
+                    <th>Change %</th>
+                    <th>Volume</th>
+                    <th>Rel Volume <span class="sort-icon">▼</span></th>
+                    <th>Market cap</th>
+                    <th>P/E</th>
+                    <th>EPS dil <span style="font-size: 9px;">TTM</span></th>
+                    <th>EPS dil growth <span style="font-size: 9px;">% YoY</span></th>
+                    <th>Div yield % <span style="font-size: 9px;">TTM</span></th>
+                    <th>Sector</th>
+                    <th>Analyst Rating</th>
+                    <th></th>
+                </tr>
+                <tr id="relStrSP500Headers" style="display: none;">
+                    <th>Symbol <span class="sort-icon">▼</span></th>
+                    <th>Current Price</th>
+                    <th>Beta <span style="font-size: 9px;">(SP500; 5Y)</span></th>
+                    <th>Correlation <span style="font-size: 9px;">(SP500; 5Y)</span></th>
+                    <th>Z-Score <span style="font-size: 9px;">(200D)</span></th>
+                    <th>Rating <span style="font-size: 9px;">(200D)</span></th>
+                    <th>Z-Score <span style="font-size: 9px;">(500D)</span></th>
+                    <th>Rating <span style="font-size: 9px;">(500D)</span></th>
+                    <th>Z-Score <span style="font-size: 9px;">(AVG)</span></th>
+                    <th>Rating <span style="font-size: 9px;">(AVG)</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="stockTable">
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #ff6b35;">SN</div>
+                            <div>
+                                <div class="company-name">SnarkNinja, Inc.</div>
+                                <div class="symbol-code">113</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>82.13 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-6.60%</td>
+                    <td>1.99M</td>
+                    <td>1.04</td>
+                    <td>11.53B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>26.01</td>
+                    <td>3.16 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+133.76%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Consumer durables</a></td>
+                    <td class="rating strong-buy">^ Strong buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #ff4444;">X</div>
+                            <div>
+                                <div class="company-name">Exelixis, Inc.</div>
+                                <div class="symbol-code">EXEL</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>41.59 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-0.45%</td>
+                    <td>2.13M</td>
+                    <td>0.81</td>
+                    <td>11.34B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>18.87</td>
+                    <td>2.20 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+240.89%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #ff9500;">JLL</div>
+                            <div>
+                                <div class="company-name">Jones Lang LaSalle Incorporated</div>
+                                <div class="symbol-code">JLL</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>236.99 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.90%</td>
+                    <td>706.51K</td>
+                    <td>1.57</td>
+                    <td>11.25B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>21.43</td>
+                    <td>11.06 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+77.72%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Finance</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #007acc;">CHRW</div>
+                            <div>
+                                <div class="company-name">C.H. Robinson Worldwide, Inc.</div>
+                                <div class="symbol-code">CHRW</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>93.54 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.54%</td>
+                    <td>981.52K</td>
+                    <td>0.97</td>
+                    <td>11.11B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>22.35</td>
+                    <td>4.19 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+65.29%</td>
+                    <td>2.64%</td>
+                    <td><a href="#" class="sector-link">Transportation</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #888;">SMR</div>
+                            <div>
+                                <div class="company-name">NuScale Power Corporation</div>
+                                <div class="symbol-code">SMR</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>38.82 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-3.86%</td>
+                    <td>9.82M</td>
+                    <td>0.58</td>
+                    <td>11.04B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>—</td>
+                    <td class="negative">-1.37 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-62.81%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Producer manufacturing</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #6c5ce7;">RVTY</div>
+                            <div>
+                                <div class="company-name">Revvity, Inc.</div>
+                                <div class="symbol-code">RVTY</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>93.53 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-2.27%</td>
+                    <td>672.65K</td>
+                    <td>0.59</td>
+                    <td>11.02B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>36.98</td>
+                    <td>2.53 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+78.46%</td>
+                    <td>0.30%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #4a90e2;">UHS</div>
+                            <div>
+                                <div class="company-name">Universal Health Services, Inc.</div>
+                                <div class="symbol-code">UHS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>171.07 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.49%</td>
+                    <td>667.82K</td>
+                    <td>0.86</td>
+                    <td>11.02B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>9.61</td>
+                    <td>17.81 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+50.99%</td>
+                    <td>0.47%</td>
+                    <td><a href="#" class="sector-link">Health services</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #e74c3c;">PPC</div>
+                            <div>
+                                <div class="company-name">Pilgrim's Pride Corporation</div>
+                                <div class="symbol-code">PPC</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>46.14 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+0.85%</td>
+                    <td>941.38K</td>
+                    <td>0.84</td>
+                    <td>10.94B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>9.09</td>
+                    <td>5.08 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+145.55%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Process industries</a></td>
+                    <td class="rating neutral">— Neutral</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #f39c12;">BMRN</div>
+                            <div>
+                                <div class="company-name">BioMarin Pharmaceutical Inc.</div>
+                                <div class="symbol-code">BMRN</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>56.22 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.85%</td>
+                    <td>1.62M</td>
+                    <td>0.75</td>
+                    <td>10.78B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>20.86</td>
+                    <td>2.70 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+152.22%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #2ecc71;">JEF</div>
+                            <div>
+                                <div class="company-name">Jefferies Financial Group Inc.</div>
+                                <div class="symbol-code">JEF</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>52.20 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-2.59%</td>
+                    <td>1.3M</td>
+                    <td>0.61</td>
+                    <td>10.77B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>18.09</td>
+                    <td>2.89 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+135.90%</td>
+                    <td>2.87%</td>
+                    <td><a href="#" class="sector-link">Finance</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #9b59b6;">VTRS</div>
+                            <div>
+                                <div class="company-name">Viatris Inc.</div>
+                                <div class="symbol-code">VTRS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>8.92 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.87%</td>
+                    <td>9M</td>
+                    <td>0.42</td>
+                    <td>10.47B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>—</td>
+                    <td class="negative">-3.18 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-6,283.33%</td>
+                    <td>5.38%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating neutral">— Neutral</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #34495e;">EXAS</div>
+                            <div>
+                                <div class="company-name">Exact Sciences Corporation</div>
+                                <div class="symbol-code">EXAS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>53.52 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-0.91%</td>
+                    <td>1.27M</td>
+                    <td>0.35</td>
+                    <td>10.1B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>—</td>
+                    <td class="negative">-5.50 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-315.22%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating strong-buy">^ Strong buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Stock data for different views
+        const stockData = {
+            custom: [
+                {
+                    symbol: "SN", 
+                    logo: "SN", 
+                    logoColor: "#ff6b35",
+                    company: "SnarkNinja, Inc.", 
+                    code: "113",
+                    price: "82.13",
+                    change: "-6.60%",
+                    volume: "1.99M",
+                    relVolume: "1.04",
+                    marketCap: "11.53B",
+                    pe: "26.01",
+                    eps: "3.16",
+                    epsGrowth: "+133.76%",
+                    divYield: "0.00%",
+                    sector: "Consumer durables",
+                    rating: "Strong buy"
+                },
+                {
+                    symbol: "EXEL", 
+                    logo: "X", 
+                    logoColor: "#ff4444",
+                    company: "Exelixis, Inc.", 
+                    code: "EXEL",
+                    price: "41.59",
+                    change: "-0.45%",
+                    volume: "2.13M",
+                    relVolume: "0.81",
+                    marketCap: "11.34B",
+                    pe: "18.87",
+                    eps: "2.20",
+                    epsGrowth: "+240.89%",
+                    divYield: "0.00%",
+                    sector: "Health technology",
+                    rating: "Buy"
+                },
+                {
+                    symbol: "JLL", 
+                    logo: "JLL", 
+                    logoColor: "#ff9500",
+                    company: "Jones Lang LaSalle Incorporated", 
+                    code: "JLL",
+                    price: "236.99",
+                    change: "-1.90%",
+                    volume: "706.51K",
+                    relVolume: "1.57",
+                    marketCap: "11.25B",
+                    pe: "21.43",
+                    eps: "11.06",
+                    epsGrowth: "+77.72%",
+                    divYield: "0.00%",
+                    sector: "Finance",
+                    rating: "Buy"
+                },
+                {
+                    symbol: "CHRW", 
+                    logo: "CHRW", 
+                    logoColor: "#007acc",
+                    company: "C.H. Robinson Worldwide, Inc.", 
+                    code: "CHRW",
+                    price: "93.54",
+                    change: "-1.54%",
+                    volume: "981.52K",
+                    relVolume: "0.97",
+                    marketCap: "11.11B",
+                    pe: "22.35",
+                    eps: "4.19",
+                    epsGrowth: "+65.29%",
+                    divYield: "2.64%",
+                    sector: "Transportation",
+                    rating: "Buy"
+                },
+                {
+                    symbol: "SMR", 
+                    logo: "SMR", 
+                    logoColor: "#888",
+                    company: "NuScale Power Corporation", 
+                    code: "SMR",
+                    price: "38.82",
+                    change: "-3.86%",
+                    volume: "9.82M",
+                    relVolume: "0.58",
+                    marketCap: "11.04B",
+                    pe: "—",
+                    eps: "-1.37",
+                    epsGrowth: "-62.81%",
+                    divYield: "0.00%",
+                    sector: "Producer manufacturing",
+                    rating: "Buy"
+                }
+            ],
+            relStrSP500: [
+                {
+                    symbol: "AAPL",
+                    logo: "AAPL",
+                    logoColor: "#007aff",
+                    company: "Apple Inc.",
+                    code: "AAPL",
+                    price: "81.76",
+                    beta: "0.97",
+                    correlation: "0.89",
+                    zScore200: "-1.5",
+                    rating200: "STRONG UNDERPERFORM",
+                    zScore500: "2.6",
+                    rating500: "SLIGHT OUTPERFORM",
+                    zScoreAvg: "0.55",
+                    ratingAvg: "NEUTRAL"
+                },
+                {
+                    symbol: "NVDA",
+                    logo: "NVDA",
+                    logoColor: "#76b900",
+                    company: "NVIDIA Corporation",
+                    code: "NVDA",
+                    price: "42.89",
+                    beta: "0.68",
+                    correlation: "0.7",
+                    zScore200: "0.8",
+                    rating200: "UNDERPERFORM",
+                    zScore500: "0.6",
+                    rating500: "NEUTRAL",
+                    zScoreAvg: "0.7",
+                    ratingAvg: "NEUTRAL"
+                },
+                {
+                    symbol: "ADM",
+                    logo: "ADM",
+                    logoColor: "#ff6b35",
+                    company: "Archer-Daniels-Midland Company",
+                    code: "ADM",
+                    price: "198.45",
+                    beta: "0.46",
+                    correlation: "0.65",
+                    zScore200: "2.1",
+                    rating200: "OUTPERFORM",
+                    zScore500: "1.1",
+                    rating500: "SLIGHT OUTPERFORM",
+                    zScoreAvg: "1.6",
+                    ratingAvg: "SLIGHT OUTPERFORM"
+                },
+                {
+                    symbol: "ALB",
+                    logo: "ALB",
+                    logoColor: "#e74c3c",
+                    company: "Albemarle Corporation",
+                    code: "ALB",
+                    price: "134.67",
+                    beta: "0.75",
+                    correlation: "0.54",
+                    zScore200: "-0.3",
+                    rating200: "UNDERPERFORM",
+                    zScore500: "0.1",
+                    rating500: "NEUTRAL",
+                    zScoreAvg: "-0.1",
+                    ratingAvg: "NEUTRAL"
+                },
+                {
+                    symbol: "NEE",
+                    logo: "NEE",
+                    logoColor: "#2ecc71",
+                    company: "NextEra Energy, Inc.",
+                    code: "NEE",
+                    price: "91.23",
+                    beta: "1.25",
+                    correlation: "0.56",
+                    zScore200: "1.4",
+                    rating200: "NEUTRAL",
+                    zScore500: "0.8",
+                    rating500: "NEUTRAL",
+                    zScoreAvg: "1.1",
+                    ratingAvg: "SLIGHT UNDERPERFORM"
+                }
+            ]
+        };
+
+        function getRatingClass(rating) {
+            const lowerRating = rating.toLowerCase();
+            if (lowerRating.includes('strong') && lowerRating.includes('buy')) return 'strong-buy';
+            if (lowerRating.includes('buy')) return 'buy';
+            if (lowerRating.includes('outperform')) return 'buy';
+            if (lowerRating.includes('underperform')) return 'negative';
+            return 'neutral';
+        }
+
+        function renderCustomTable() {
+            const tbody = document.getElementById('stockTable');
+            tbody.innerHTML = '';
+            
+            stockData.custom.forEach(stock => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: ${stock.logoColor};">${stock.logo}</div>
+                            <div>
+                                <div class="company-name">${stock.company}</div>
+                                <div class="symbol-code">${stock.code}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${stock.price} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="${stock.change.startsWith('+') ? 'positive' : 'negative'}">${stock.change}</td>
+                    <td>${stock.volume}</td>
+                    <td>${stock.relVolume}</td>
+                    <td>${stock.marketCap} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>${stock.pe}</td>
+                    <td${stock.eps.startsWith('-') ? ' class="negative"' : ''}>${stock.eps} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="${stock.epsGrowth.startsWith('+') ? 'positive' : 'negative'}">${stock.epsGrowth}</td>
+                    <td>${stock.divYield}</td>
+                    <td><a href="#" class="sector-link">${stock.sector}</a></td>
+                    <td class="rating ${getRatingClass(stock.rating)}">^ ${stock.rating}</td>
+                    <td><button class="close-btn">×</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderRelStrSP500Table() {
+            const tbody = document.getElementById('stockTable');
+            tbody.innerHTML = '';
+            
+            stockData.relStrSP500.forEach(stock => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: ${stock.logoColor};">${stock.logo}</div>
+                            <div>
+                                <div class="company-name">${stock.company}</div>
+                                <div class="symbol-code">${stock.code}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${stock.price} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>${stock.beta}</td>
+                    <td>${stock.correlation}</td>
+                    <td class="${parseFloat(stock.zScore200) < 0 ? 'negative' : 'positive'}">${stock.zScore200}</td>
+                    <td class="rating ${getRatingClass(stock.rating200)}">${stock.rating200}</td>
+                    <td class="${parseFloat(stock.zScore500) < 0 ? 'negative' : 'positive'}">${stock.zScore500}</td>
+                    <td class="rating ${getRatingClass(stock.rating500)}">${stock.rating500}</td>
+                    <td class="${parseFloat(stock.zScoreAvg) < 0 ? 'negative' : 'positive'}">${stock.zScoreAvg}</td>
+                    <td class="rating ${getRatingClass(stock.ratingAvg)}">${stock.ratingAvg}</td>
+                    <td><button class="close-btn">×</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function switchToTab(tabName) {
+            // Hide all header rows
+            document.getElementById('customHeaders').style.display = 'none';
+            document.getElementById('relStrSP500Headers').style.display = 'none';
+            
+            // Show appropriate header and render table
+            if (tabName === 'RelStr_S&P500') {
+                document.getElementById('relStrSP500Headers').style.display = '';
+                renderRelStrSP500Table();
+            } else {
+                document.getElementById('customHeaders').style.display = '';
+                renderCustomTable();
+            }
+        }
+
+        // Initialize with custom table
+        renderCustomTable();
+        function toggleFilters() {
+            const filtersSection = document.getElementById('filtersSection');
+            const toggleBtn = document.querySelector('.toggle-btn');
+            
+            if (filtersSection.classList.contains('hidden')) {
+                filtersSection.classList.remove('hidden');
+                toggleBtn.textContent = '▲';
+            } else {
+                filtersSection.classList.add('hidden');
+                toggleBtn.textContent = '▼';
+            }
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Toggle active state for demo
+                this.classList.toggle('active');
+            });
+        });
+
+        document.querySelectorAll('.preset-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Switch table content based on tab
+                switchToTab(this.textContent);
+            });
+        });
+
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('tr').remove();
+            });
+        });
+
+        // Re-attach event listeners after table updates
+        function attachEventListeners() {
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('tr').remove();
+                });
+            });
+        }
+
+        // Update the render functions to attach listeners
+        function renderCustomTable() {
+            const tbody = document.getElementById('stockTable');
+            tbody.innerHTML = '';
+            
+            stockData.custom.forEach(stock => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: ${stock.logoColor};">${stock.logo}</div>
+                            <div>
+                                <div class="company-name">${stock.company}</div>
+                                <div class="symbol-code">${stock.code}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${stock.price} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="${stock.change.startsWith('+') ? 'positive' : 'negative'}">${stock.change}</td>
+                    <td>${stock.volume}</td>
+                    <td>${stock.relVolume}</td>
+                    <td>${stock.marketCap} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>${stock.pe}</td>
+                    <td${stock.eps.startsWith('-') ? ' class="negative"' : ''}>${stock.eps} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="${stock.epsGrowth.startsWith('+') ? 'positive' : 'negative'}">${stock.epsGrowth}</td>
+                    <td>${stock.divYield}</td>
+                    <td><a href="#" class="sector-link">${stock.sector}</a></td>
+                    <td class="rating ${getRatingClass(stock.rating)}">^ ${stock.rating}</td>
+                    <td><button class="close-btn">×</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+            attachEventListeners();
+        }
+
+        function renderRelStrSP500Table() {
+            const tbody = document.getElementById('stockTable');
+            tbody.innerHTML = '';
+            
+            stockData.relStrSP500.forEach(stock => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: ${stock.logoColor};">${stock.logo}</div>
+                            <div>
+                                <div class="company-name">${stock.company}</div>
+                                <div class="symbol-code">${stock.code}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${stock.price} <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>${stock.beta}</td>
+                    <td>${stock.correlation}</td>
+                    <td class="${parseFloat(stock.zScore200) < 0 ? 'negative' : 'positive'}">${stock.zScore200}</td>
+                    <td class="rating ${getRatingClass(stock.rating200)}">${stock.rating200}</td>
+                    <td class="${parseFloat(stock.zScore500) < 0 ? 'negative' : 'positive'}">${stock.zScore500}</td>
+                    <td class="rating ${getRatingClass(stock.rating500)}">${stock.rating500}</td>
+                    <td class="${parseFloat(stock.zScoreAvg) < 0 ? 'negative' : 'positive'}">${stock.zScoreAvg}</td>
+                    <td class="rating ${getRatingClass(stock.ratingAvg)}">${stock.ratingAvg}</td>
+                    <td><button class="close-btn">×</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+            attachEventListeners();
+        }
+
+        // Add sorting functionality
+        document.querySelectorAll('th').forEach(header => {
+            header.addEventListener('click', function() {
+                // Reset other headers
+                document.querySelectorAll('.sort-icon').forEach(icon => {
+                    icon.textContent = '▼';
+                });
+                
+                // Toggle sort direction
+                const sortIcon = this.querySelector('.sort-icon') || this.appendChild(document.createElement('span'));
+                sortIcon.className = 'sort-icon';
+                sortIcon.textContent = sortIcon.textContent === '▼' ? '▲' : '▼';
+            });
+        });
+    </script>
+</body>
+</html>
