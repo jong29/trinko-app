@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
+import json
 
 # Create your models here.
 class Assets(models.Model):
@@ -79,3 +81,74 @@ class AssetZScore(models.Model):
         # Typically this would be when the z-score is below a certain threshold
         # indicating the asset is oversold
         return self.zscore_20d < -2.0 or self.zscore_100d < -2.0
+
+
+class ColumnCategory(models.Model):
+    """Model to categorize columns for the ETF screener"""
+    name = models.CharField(max_length=100, unique=True)
+    columns = ArrayField(
+        models.CharField(max_length=100),
+        help_text="List of column names that belong to this category"
+    )
+    display_order = models.PositiveSmallIntegerField(default=0, help_text="Order in which to display categories")
+    
+    class Meta:
+        verbose_name = "Column Category"
+        verbose_name_plural = "Column Categories"
+        ordering = ['display_order', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
+class Filter(models.Model):
+    """Model to store filter configurations"""
+    OPERATOR_CHOICES = [
+        ('gt', 'Greater than'),
+        ('gte', 'Greater than or equal to'),
+        ('lt', 'Less than'),
+        ('lte', 'Less than or equal to'),
+        ('eq', 'Equal to'),
+        ('neq', 'Not equal to'),
+        ('contains', 'Contains'),
+        ('between', 'Between'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    field = models.CharField(max_length=100, help_text="Field/column to apply filter on")
+    operator = models.CharField(max_length=10, choices=OPERATOR_CHOICES)
+    value = models.CharField(max_length=255, help_text="Filter value or JSON for multiple values")
+    user_created = models.BooleanField(default=True, help_text="Whether this filter was created by a user")
+    
+    class Meta:
+        verbose_name = "Filter"
+        verbose_name_plural = "Filters"
+    
+    def __str__(self):
+        return f"{self.name}: {self.field} {self.operator}"
+    
+    @property
+    def parsed_value(self):
+        """Parse the value field if it contains JSON"""
+        try:
+            return json.loads(self.value)
+        except json.JSONDecodeError:
+            return self.value
+
+
+class Preset(models.Model):
+    """Model to store combinations of filters as presets"""
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    filters = models.ManyToManyField(Filter, related_name="presets")
+    is_default = models.BooleanField(default=False, help_text="Whether this is a default preset")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Preset"
+        verbose_name_plural = "Presets"
+        ordering = ['-is_default', 'name']
+    
+    def __str__(self):
+        return self.name
