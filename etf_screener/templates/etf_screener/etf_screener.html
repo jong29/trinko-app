@@ -4,54 +4,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="preload" href="{% static 'js/scripts.js' %}" as="script" />
-    <link rel="stylesheet" href="{% static '/css/styles.css' %}">
+    <title>Stock Screener</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <script src="{% static 'js/scripts.js' %}" defer></script>
 </head>
 <body>
-    <div class="container">
-        <h1>ETF Screening Tool</h1>
-        
-        <div class="search-container">
-            <input type="text" class="search-box" id="searchBox" placeholder="Search ETF by ticker, name, or theme (e.g., 'technology', 'SOXX', 'semiconductor')">
-        </div>
-        
-        <div id="tableContainer">
-            <div class="loading">Loading ETF data...</div>
-        </div>
-        
-        <div class="footer-section">
-            <div class="footer-content">
-                <div class="footer-grid">
-                    <div>
-                        <h3>How to Use This Tool</h3>
-                        <p>Looking for investment ideas? Here's our suggested workflow:</p>
-                        <ul>
-                            <li>Go to our <a href="#">Undervalued Asset Finder</a> to identify undervalued assets and themes</li>
-                            <li>Screen those names here using this ETF Screener</li>
-                            <li>Use our <a href="#">Research Snapshot</a> to instantly generate investment reports</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3>About This ETF Universe</h3>
-                        <p>All ETFs in this list are pre-screened using these criteria:</p>
-                        <ul>
-                            <li>Asset class: Equities, Fixed Income, or Commodities only</li>
-                            <li>Holdings region: North America</li>
-                            <li>AUM: Over $1 billion</li>
-                            <li>Management style: Passive only</li>
-                            <li>Leverage: Non-leveraged</li>
-                            <li>Expense ratio: Under 0.5%</li>
-                        </ul>
-                        <p>This creates a list of ETFs that are i) liquid with low management fees and tracking error, and ii) pure-play and passively managed funds whose underperformance, if any, is likely due to market cycles rather than poor fund management.</p>
-                        <p><strong>Note:</strong> For leveraged ETFs, search their unleveraged version (e.g., QQQ instead of TQQQ).</p>
-                    </div>
-                </div>
-            </div>
+    <div class="header">
+        <span class="screener-title">Stock Screener ▼</span>
+        <span class="default-title">ABSOLUTE DEFAULT ▼</span>
+        <button class="toggle-btn" onclick="toggleFilters()">▲</button>
+    </div>
+
+    <div class="preset-tabs-section">
+        <div class="preset-tab active">Custom</div>
+        <div class="preset-tab">Deep-Value</div>
+        <div class="preset-tab">Low-Reversal</div>
+        <div class="preset-tab">Breakout-Momentum</div>
+        <div class="preset-tab">Michael Burry</div>
+        <div class="preset-tab">Warren Buffet</div>
+    </div>
+
+    <div class="filters" id="filtersSection">
+        <div class="filter-group">
+            <button class="filter-btn">
+                Market <span class="flag"></span> US ▼
+            </button>
+            <button class="filter-btn">Watchlist ▼</button>
+            <button class="filter-btn">Index 50 ▼</button>
+            <button class="filter-btn">Price ▼</button>
+            <button class="filter-btn">Change % ▼</button>
+            <button class="filter-btn">Market cap ▼</button>
+            <button class="filter-btn">P/E ▼</button>
+            <button class="filter-btn">EPS dil growth ▼</button>
+            <button class="filter-btn">Div yield % ▼</button>
+            <button class="filter-btn">Sector ▼</button>
+            <button class="filter-btn">Analyst Rating ▼</button>
+            <button class="filter-btn">Perf % ▼</button>
+            <button class="filter-btn">Revenue growth ▼</button>
+            <button class="filter-btn peg-filter">PEG, TTM ◀ 0.5 ▼</button>
+            <button class="filter-btn">ROE ▼</button>
+            <button class="filter-btn">Beta ▼</button>
+            <button class="filter-btn">Recent earnings date ▼</button>
+            <button class="filter-btn">Upcoming earnings date ▼</button>
+            <button class="filter-btn">Volume ▼</button>
+            <button class="filter-btn">Market cap 10B to 200B USD ▼</button>
+            <button class="filter-btn">Exchange ℹ️ ▼</button>
+            <button class="add-btn">+</button>
+            <button style="background: none; border: none; color: #888; cursor: pointer;">⋯</button>
         </div>
     </div>
 
-    <div class="tooltip" id="tooltip"></div>
+    <div class="tabs">
+        <div class="tab active">Custom</div>
+        <div class="tab">Overview</div>
+        <div class="tab">RelStr_S&P500</div>
+        <div class="tab">RelStr_Sector</div>
+        <div class="tab">Fundamentals</div>
+        <div class="tab">Momentum</div>
+        <div class="tab">Volatility</div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead id="tableHeader">
+                <tr id="customHeaders">
+                    <th>Symbol <span class="sort-icon">▼</span></th>
+                    <th>Price</th>
+                    <th>Change %</th>
+                    <th>Volume</th>
+                    <th>Rel Volume <span class="sort-icon">▼</span></th>
+                    <th>Market cap</th>
+                    <th>P/E</th>
+                    <th>EPS dil <span style="font-size: 9px;">TTM</span></th>
+                    <th>EPS dil growth <span style="font-size: 9px;">% YoY</span></th>
+                    <th>Div yield % <span style="font-size: 9px;">TTM</span></th>
+                    <th>Sector</th>
+                    <th>Analyst Rating</th>
+                    <th></th>
+                </tr>
+                <tr id="relStrSP500Headers" style="display: none;">
+                    <th>Symbol <span class="sort-icon">▼</span></th>
+                    <th>Current Price</th>
+                    <th>Beta <span style="font-size: 9px;">(SP500; 5Y)</span></th>
+                    <th>Correlation <span style="font-size: 9px;">(SP500; 5Y)</span></th>
+                    <th>Z-Score <span style="font-size: 9px;">(200D)</span></th>
+                    <th>Rating <span style="font-size: 9px;">(200D)</span></th>
+                    <th>Z-Score <span style="font-size: 9px;">(500D)</span></th>
+                    <th>Rating <span style="font-size: 9px;">(500D)</span></th>
+                    <th>Z-Score <span style="font-size: 9px;">(AVG)</span></th>
+                    <th>Rating <span style="font-size: 9px;">(AVG)</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="stockTable">
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #ff6b35;">SN</div>
+                            <div>
+                                <div class="company-name">SnarkNinja, Inc.</div>
+                                <div class="symbol-code">113</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>82.13 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-6.60%</td>
+                    <td>1.99M</td>
+                    <td>1.04</td>
+                    <td>11.53B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>26.01</td>
+                    <td>3.16 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+133.76%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Consumer durables</a></td>
+                    <td class="rating strong-buy">^ Strong buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #ff4444;">X</div>
+                            <div>
+                                <div class="company-name">Exelixis, Inc.</div>
+                                <div class="symbol-code">EXEL</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>41.59 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-0.45%</td>
+                    <td>2.13M</td>
+                    <td>0.81</td>
+                    <td>11.34B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>18.87</td>
+                    <td>2.20 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+240.89%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #ff9500;">JLL</div>
+                            <div>
+                                <div class="company-name">Jones Lang LaSalle Incorporated</div>
+                                <div class="symbol-code">JLL</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>236.99 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.90%</td>
+                    <td>706.51K</td>
+                    <td>1.57</td>
+                    <td>11.25B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>21.43</td>
+                    <td>11.06 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+77.72%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Finance</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #007acc;">CHRW</div>
+                            <div>
+                                <div class="company-name">C.H. Robinson Worldwide, Inc.</div>
+                                <div class="symbol-code">CHRW</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>93.54 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.54%</td>
+                    <td>981.52K</td>
+                    <td>0.97</td>
+                    <td>11.11B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>22.35</td>
+                    <td>4.19 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+65.29%</td>
+                    <td>2.64%</td>
+                    <td><a href="#" class="sector-link">Transportation</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #888;">SMR</div>
+                            <div>
+                                <div class="company-name">NuScale Power Corporation</div>
+                                <div class="symbol-code">SMR</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>38.82 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-3.86%</td>
+                    <td>9.82M</td>
+                    <td>0.58</td>
+                    <td>11.04B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>—</td>
+                    <td class="negative">-1.37 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-62.81%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Producer manufacturing</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #6c5ce7;">RVTY</div>
+                            <div>
+                                <div class="company-name">Revvity, Inc.</div>
+                                <div class="symbol-code">RVTY</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>93.53 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-2.27%</td>
+                    <td>672.65K</td>
+                    <td>0.59</td>
+                    <td>11.02B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>36.98</td>
+                    <td>2.53 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+78.46%</td>
+                    <td>0.30%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #4a90e2;">UHS</div>
+                            <div>
+                                <div class="company-name">Universal Health Services, Inc.</div>
+                                <div class="symbol-code">UHS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>171.07 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.49%</td>
+                    <td>667.82K</td>
+                    <td>0.86</td>
+                    <td>11.02B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>9.61</td>
+                    <td>17.81 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+50.99%</td>
+                    <td>0.47%</td>
+                    <td><a href="#" class="sector-link">Health services</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #e74c3c;">PPC</div>
+                            <div>
+                                <div class="company-name">Pilgrim's Pride Corporation</div>
+                                <div class="symbol-code">PPC</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>46.14 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+0.85%</td>
+                    <td>941.38K</td>
+                    <td>0.84</td>
+                    <td>10.94B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>9.09</td>
+                    <td>5.08 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+145.55%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Process industries</a></td>
+                    <td class="rating neutral">— Neutral</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #f39c12;">BMRN</div>
+                            <div>
+                                <div class="company-name">BioMarin Pharmaceutical Inc.</div>
+                                <div class="symbol-code">BMRN</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>56.22 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.85%</td>
+                    <td>1.62M</td>
+                    <td>0.75</td>
+                    <td>10.78B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>20.86</td>
+                    <td>2.70 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+152.22%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #2ecc71;">JEF</div>
+                            <div>
+                                <div class="company-name">Jefferies Financial Group Inc.</div>
+                                <div class="symbol-code">JEF</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>52.20 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-2.59%</td>
+                    <td>1.3M</td>
+                    <td>0.61</td>
+                    <td>10.77B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>18.09</td>
+                    <td>2.89 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="positive">+135.90%</td>
+                    <td>2.87%</td>
+                    <td><a href="#" class="sector-link">Finance</a></td>
+                    <td class="rating buy">^ Buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #9b59b6;">VTRS</div>
+                            <div>
+                                <div class="company-name">Viatris Inc.</div>
+                                <div class="symbol-code">VTRS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>8.92 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-1.87%</td>
+                    <td>9M</td>
+                    <td>0.42</td>
+                    <td>10.47B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>—</td>
+                    <td class="negative">-3.18 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-6,283.33%</td>
+                    <td>5.38%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating neutral">— Neutral</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="company-logo" style="background-color: #34495e;">EXAS</div>
+                            <div>
+                                <div class="company-name">Exact Sciences Corporation</div>
+                                <div class="symbol-code">EXAS</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>53.52 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-0.91%</td>
+                    <td>1.27M</td>
+                    <td>0.35</td>
+                    <td>10.1B <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td>—</td>
+                    <td class="negative">-5.50 <span style="color: #888; font-size: 10px;">USD</span></td>
+                    <td class="negative">-315.22%</td>
+                    <td>0.00%</td>
+                    <td><a href="#" class="sector-link">Health technology</a></td>
+                    <td class="rating strong-buy">^ Strong buy</td>
+                    <td><button class="close-btn">×</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
 </body>
 </html>
